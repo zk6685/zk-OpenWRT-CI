@@ -10,6 +10,8 @@ find ./feeds/luci/collections/ -type f -name "Makefile" -exec sed -i "s/luci-the
 find ./feeds/luci/modules/luci-mod-system/ -type f -name "flash.js" -exec sed -i "s/192\.168\.[0-9]*\.[0-9]*/$WRT_IP/g" {} +
 #添加编译日期标识
 find ./feeds/luci/modules/luci-mod-status/ -type f -name "10_system.js" -exec sed -i "s/(\(luciversion || ''\))/(\1) + (' \/ $WRT_MARK-$WRT_DATE')/g" {} +
+#修改固件版本标识为 "ImmortalWrt SNAPSHOT rxxx / build by zk6685"
+sed -i "s|DISTRIB_DESCRIPTION='%D %V %C'|DISTRIB_DESCRIPTION='%D %V %C / build by $WRT_MARK'|g" ./package/base-files/files/etc/openwrt_release
 
 WIFI_UC="./package/network/config/wifi-scripts/files/lib/wifi/mac80211.uc"
 if [ -f "$WIFI_UC" ]; then

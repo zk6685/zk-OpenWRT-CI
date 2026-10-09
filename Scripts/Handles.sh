@@ -43,3 +43,8 @@ FIX "natmapt" "$PACKAGE_PATH/luci-app-natmapt" sed -i "s/network/services/g" \
 #修复Rust编译失败
 FIX "rust" "$FEEDS_PATH/packages/lang/rust" sed -i 's/ci-llvm=true/ci-llvm=false/g' \
 	"$FEEDS_PATH/packages/lang/rust/Makefile"
+
+#修改nn6000内核分区大小为12M(默认6144k=6M)
+FIX "nn6000-kernel-12m" "target/linux/qualcommax/image" sed -i \
+	"/link_nn6000-common/,/endef/ s/KERNEL_SIZE := 6144k/KERNEL_SIZE := 12288k/" \
+	"target/linux/qualcommax/image/ipq60xx.mk"

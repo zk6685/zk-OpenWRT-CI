@@ -185,6 +185,8 @@ jobs:
           $GITHUB_WORKSPACE/Scripts/Settings.sh
 
           make defconfig -j$(nproc) && make clean -j$(nproc)
+          # CONFIG_USE_LLVM_HOST 无Kconfig声明,defconfig会清除;在defconfig后补写以启用系统clang编译BPF(daed)
+          echo 'CONFIG_USE_LLVM_HOST=y' >> .config
 
       - name: Download Packages
         if: ${{ !inputs.WRT_TEST }}

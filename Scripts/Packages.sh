@@ -41,6 +41,21 @@ UPDATE_PACKAGE() {
 	fi
 }
 
+#从 kenzok8/small-package 一次性提取多个指定包到 ./package/（避免多次 clone 大仓库）
+SMALLPKG() {
+	local PKGS="$1"
+	local REPO_PATH="./package/small-package"
+	#删除 feeds 中可能与提取包冲突的同名包
+	for NAME in $PKGS; do
+		find ./feeds/luci/ ./feeds/packages/ -maxdepth 4 -type d -iname "*$NAME*" -exec rm -rf {} \; 2>/dev/null
+	done
+	git clone --depth=1 --single-branch --branch main "https://github.com/kenzok8/small-package.git" $REPO_PATH
+	for NAME in $PKGS; do
+		cp -rf $REPO_PATH/$NAME ./package/ 2>/dev/null
+	done
+	rm -rf $REPO_PATH
+}
+
 # 调用示例
 # UPDATE_PACKAGE "OpenAppFilter" "destan19/OpenAppFilter" "master" "" "custom_name1 custom_name2"
 # UPDATE_PACKAGE "open-app-filter" "destan19/OpenAppFilter" "master" "" "luci-app-appfilter oaf" 这样会把原有的open-app-filter，luci-app-appfilter，oaf相关组件删除，不会出现coremark错误。
@@ -92,7 +107,50 @@ UPDATE_PACKAGE "mt5700m" "LianXia233/luci-app-mt5700m" "main"
 UPDATE_PACKAGE "netmonitor" "LianXia233/luci-app-netmonitor" "main"
 UPDATE_PACKAGE "qmodem-generic" "LianXia233/luci-app-qmodem-generic" "main"
 
-UPDATE_PACKAGE "daed" "xuanranran/openwrt-daed" "master"
+#daed 改用 kenzok8/small-package（新版 luci-app-daed + daed）
+SMALLPKG "luci-app-daed daed"
+#istore 商店 + istorex 首页及其依赖（均来自 small-package）
+SMALLPKG "luci-app-istorex luci-app-store luci-app-quickstart luci-lib-taskd luci-lib-iform taskd"
+#补齐 small-package 未提供的 daed-geoip / daed-geosite 软链数据包
+mkdir -p ./package/daed-geoip ./package/daed-geosite
+cat > ./package/daed-geoip/Makefile <<'EOF'
+include $(TOPDIR)/rules.mk
+PKG_NAME:=daed-geoip
+PKG_RELEASE:=1
+include $(INCLUDE_DIR)/package.mk
+define Package/daed-geoip
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=Web Servers/Proxies
+  TITLE:=geoip for daed
+  DEPENDS:=+daed +v2ray-geoip
+  PKGARCH:=all
+endef
+define Package/daed-geoip/install
+  $(INSTALL_DIR) $(1)/usr/share/daed
+  $(LN) ../v2ray/geoip.dat $(1)/usr/share/daed/geoip.dat
+endef
+$(eval $(call BuildPackage,daed-geoip))
+EOF
+cat > ./package/daed-geosite/Makefile <<'EOF'
+include $(TOPDIR)/rules.mk
+PKG_NAME:=daed-geosite
+PKG_RELEASE:=1
+include $(INCLUDE_DIR)/package.mk
+define Package/daed-geosite
+  SECTION:=net
+  CATEGORY:=Network
+  SUBMENU:=Web Servers/Proxies
+  TITLE:=geosite for daed
+  DEPENDS:=+daed +v2ray-geosite
+  PKGARCH:=all
+endef
+define Package/daed-geosite/install
+  $(INSTALL_DIR) $(1)/usr/share/daed
+  $(LN) ../v2ray/geosite.dat $(1)/usr/share/daed/geosite.dat
+endef
+$(eval $(call BuildPackage,daed-geosite))
+EOF
 UPDATE_PACKAGE "clouddrive2" "xuanranran/openwrt-clouddrive2" "master"
 
 #更新软件包版本

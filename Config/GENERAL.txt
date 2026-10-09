@@ -147,3 +147,11 @@ CONFIG_PACKAGE_clouddrive2=y
 #daed所需内核选项
 CONFIG_KERNEL_DEBUG_INFO_BTF=y
 CONFIG_KERNEL_BPF_EVENTS=y
+CONFIG_KERNEL_XDP_SOCKETS=y
+#istorex 首页 + istore 商店
+CONFIG_PACKAGE_luci-app-istorex=y
+CONFIG_PACKAGE_luci-app-store=y
+CONFIG_PACKAGE_luci-app-quickstart=y
+CONFIG_PACKAGE_luci-lib-taskd=y
+CONFIG_PACKAGE_taskd=y
+CONFIG_PACKAGE_luci-lib-iform=y

@@ -187,6 +187,8 @@ jobs:
           make defconfig -j$(nproc) && make clean -j$(nproc)
           # CONFIG_USE_LLVM_HOST 无Kconfig声明,defconfig会清除;在defconfig后补写以启用系统clang编译BPF(daed)
           echo 'CONFIG_USE_LLVM_HOST=y' >> .config
+          # daed 的 BTF 用集成内核BTF(避免回落到不存在的 vmlinux-btf 包)
+          echo 'CONFIG_DAED_USE_KERNEL_BTF=y' >> .config
 
       - name: Download Packages
         if: ${{ !inputs.WRT_TEST }}

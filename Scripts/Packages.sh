@@ -109,17 +109,27 @@ UPDATE_PACKAGE "qmodem-generic" "LianXia233/luci-app-qmodem-generic" "main"
 
 #daed 改用 kenzok8/small-package（新版 luci-app-daed + daed）
 SMALLPKG "luci-app-daed daed"
-#istore 商店 + istorex 首页及其依赖（均来自 small-package）
-SMALLPKG "luci-app-istorex luci-app-store luci-app-quickstart luci-lib-taskd luci-lib-iform taskd"
-# daed 本体依赖 v2ray-geoip/v2ray-geosite 提供数据文件，但 daed 的 install 未把 geoip.dat/geosite.dat 装入 /usr/share/daed/；
-# 而 luci-app-daed 又依赖 small-package 未提供的 daed-geoip/daed-geosite。
-# 方案：给 daed 包 install 打补丁，把 v2ray 的数据软链到 /usr/share/daed/，并去掉 luci-app-daed 对 daed-geoip/daed-geosite 的依赖。
+#istore 商店 + istorex 首页及其依赖（均来自 small-package；补 quickstart/luci-lib-xterm 以满足 luci-app-quickstart 与 luci-lib-taskd 的依赖）
+SMALLPKG "luci-app-istorex luci-app-store luci-app-quickstart luci-lib-taskd luci-lib-iform taskd quickstart luci-lib-xterm"
+# daed 处理：去掉 luci-app-daed 对 daed-geoip/daed-geosite 的依赖；删除 daed 对不存在的 vmlinux-btf 的条件依赖；
+# 并在 daed install 段追加软链，把 v2ray 的 geoip.dat/geosite.dat 装入 /usr/share/daed/。
 sed -i 's/ +daed-geoip +daed-geosite//g' ./package/luci-app-daed/Makefile
-awk '
-  /^define Package\/daed\/install$/{f=1}
-  f && /^endef$/{print "\t$(LN) ../v2ray/geoip.dat $(1)/usr/share/daed/geoip.dat"; print "\t$(LN) ../v2ray/geosite.dat $(1)/usr/share/daed/geosite.dat"; f=0}
-  {print}
-' ./package/daed/Makefile > ./package/daed/Makefile.new && mv ./package/daed/Makefile.new ./package/daed/Makefile
+python3 <<'PYEOF'
+import re
+p='./package/daed/Makefile'
+s=open(p).read()
+# 删除 "+@KERNEL_XDP_SOCKETS \" 续行到 "vmlinux-btf" 的条件依赖整段
+s=re.sub(r'\s*\+@KERNEL_XDP_SOCKETS\s*\\\r?\n\s*\+DAED_USE_VMLINUX_BTF:vmlinux-btf\r?\n','\n',s)
+# 兜底：删除任何残留的 vmlinux-btf 依赖行
+s=re.sub(r'^.*vmlinux-btf.*\r?\n','',s,flags=re.M)
+# 清理删除后 DEPENDS 末尾遗留的悬空续行符（\ 后接空行）
+s=re.sub(r'\+v2ray-geosite\s*\\\r?\n','+v2ray-geosite\n',s)
+# install 段末尾追加 geoip/geosite 软链（把 v2ray 的数据软链进 daed 目录）
+s=s.replace('$(INSTALL_DATA) $(CURDIR)/files/daed.keep $(1)/lib/upgrade/keep.d/daed\nendef',
+            '$(INSTALL_DATA) $(CURDIR)/files/daed.keep $(1)/lib/upgrade/keep.d/daed\n\t$(LN) ../v2ray/geoip.dat $(1)/usr/share/daed/geoip.dat\n\t$(LN) ../v2ray/geosite.dat $(1)/usr/share/daed/geosite.dat\nendef')
+open(p,'w').write(s)
+print("daed patched")
+PYEOF
 UPDATE_PACKAGE "clouddrive2" "xuanranran/openwrt-clouddrive2" "master"
 
 #更新软件包版本

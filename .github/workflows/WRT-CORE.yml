@@ -189,6 +189,8 @@ jobs:
           echo 'CONFIG_USE_LLVM_HOST=y' >> .config
           # daed 的 BTF 用集成内核BTF(避免回落到不存在的 vmlinux-btf 包)
           echo 'CONFIG_DAED_USE_KERNEL_BTF=y' >> .config
+          # avahi 依赖 libdaemon,该包在当前 snapshot feeds 未注册;禁用以避免编译失败(mDNS服务发现,非必需)
+          echo 'CONFIG_PACKAGE_avahi=n' >> .config
 
       - name: Download Packages
         if: ${{ !inputs.WRT_TEST }}

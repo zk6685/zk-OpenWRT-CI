@@ -118,6 +118,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=daed-geoip
 PKG_RELEASE:=1
 include $(INCLUDE_DIR)/package.mk
+define Build/Prepare
+endef
+define Build/Compile
+endef
 define Package/daed-geoip
   SECTION:=net
   CATEGORY:=Network
@@ -137,6 +141,10 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=daed-geosite
 PKG_RELEASE:=1
 include $(INCLUDE_DIR)/package.mk
+define Build/Prepare
+endef
+define Build/Compile
+endef
 define Package/daed-geosite
   SECTION:=net
   CATEGORY:=Network

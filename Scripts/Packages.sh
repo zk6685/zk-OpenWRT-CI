@@ -111,54 +111,15 @@ UPDATE_PACKAGE "qmodem-generic" "LianXia233/luci-app-qmodem-generic" "main"
 SMALLPKG "luci-app-daed daed"
 #istore 商店 + istorex 首页及其依赖（均来自 small-package）
 SMALLPKG "luci-app-istorex luci-app-store luci-app-quickstart luci-lib-taskd luci-lib-iform taskd"
-#补齐 small-package 未提供的 daed-geoip / daed-geosite 软链数据包
-mkdir -p ./package/daed-geoip ./package/daed-geosite
-cat > ./package/daed-geoip/Makefile <<'EOF'
-include $(TOPDIR)/rules.mk
-PKG_NAME:=daed-geoip
-PKG_RELEASE:=1
-include $(INCLUDE_DIR)/package.mk
-define Build/Prepare
-endef
-define Build/Compile
-endef
-define Package/daed-geoip
-  SECTION:=net
-  CATEGORY:=Network
-  SUBMENU:=Web Servers/Proxies
-  TITLE:=geoip for daed
-  DEPENDS:=+daed +v2ray-geoip
-  PKGARCH:=all
-endef
-define Package/daed-geoip/install
-  $(INSTALL_DIR) $(1)/usr/share/daed
-  $(LN) ../v2ray/geoip.dat $(1)/usr/share/daed/geoip.dat
-endef
-$(eval $(call BuildPackage,daed-geoip))
-EOF
-cat > ./package/daed-geosite/Makefile <<'EOF'
-include $(TOPDIR)/rules.mk
-PKG_NAME:=daed-geosite
-PKG_RELEASE:=1
-include $(INCLUDE_DIR)/package.mk
-define Build/Prepare
-endef
-define Build/Compile
-endef
-define Package/daed-geosite
-  SECTION:=net
-  CATEGORY:=Network
-  SUBMENU:=Web Servers/Proxies
-  TITLE:=geosite for daed
-  DEPENDS:=+daed +v2ray-geosite
-  PKGARCH:=all
-endef
-define Package/daed-geosite/install
-  $(INSTALL_DIR) $(1)/usr/share/daed
-  $(LN) ../v2ray/geosite.dat $(1)/usr/share/daed/geosite.dat
-endef
-$(eval $(call BuildPackage,daed-geosite))
-EOF
+# daed 本体依赖 v2ray-geoip/v2ray-geosite 提供数据文件，但 daed 的 install 未把 geoip.dat/geosite.dat 装入 /usr/share/daed/；
+# 而 luci-app-daed 又依赖 small-package 未提供的 daed-geoip/daed-geosite。
+# 方案：给 daed 包 install 打补丁，把 v2ray 的数据软链到 /usr/share/daed/，并去掉 luci-app-daed 对 daed-geoip/daed-geosite 的依赖。
+sed -i 's/ +daed-geoip +daed-geosite//g' ./package/luci-app-daed/Makefile
+awk '
+  /^define Package\/daed\/install$/{f=1}
+  f && /^endef$/{print "\t$(LN) ../v2ray/geoip.dat $(1)/usr/share/daed/geoip.dat"; print "\t$(LN) ../v2ray/geosite.dat $(1)/usr/share/daed/geosite.dat"; f=0}
+  {print}
+' ./package/daed/Makefile > ./package/daed/Makefile.new && mv ./package/daed/Makefile.new ./package/daed/Makefile
 UPDATE_PACKAGE "clouddrive2" "xuanranran/openwrt-clouddrive2" "master"
 
 #更新软件包版本

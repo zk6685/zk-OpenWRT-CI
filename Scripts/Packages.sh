@@ -108,13 +108,13 @@ UPDATE_PACKAGE "mt5700m" "LianXia233/luci-app-mt5700m" "main"
 UPDATE_PACKAGE "netmonitor" "LianXia233/luci-app-netmonitor" "main"
 UPDATE_PACKAGE "qmodem-generic" "LianXia233/luci-app-qmodem-generic" "main"
 
-#daed 改用 kenzok8/small-package（新版 luci-app-daed + daed）
-SMALLPKG "luci-app-daed daed"
+#daede(istore整合管理界面) + dae + daed，改用 kenzok8/small-package
+SMALLPKG "luci-app-daede dae daed"
 #istore 商店 + istorex 首页及其依赖（均来自 small-package；补 quickstart/luci-lib-xterm 以满足 luci-app-quickstart 与 luci-lib-taskd 的依赖）
 SMALLPKG "luci-app-istorex luci-app-store luci-app-quickstart luci-lib-taskd luci-lib-iform taskd quickstart luci-lib-xterm"
-# daed 处理：去掉 luci-app-daed 对 daed-geoip/daed-geosite 的依赖；删除 daed 对不存在的 vmlinux-btf 的条件依赖；
-# 并在 daed install 段追加软链，把 v2ray 的 geoip.dat/geosite.dat 装入 /usr/share/daed/。
-sed -i 's/ +daed-geoip +daed-geosite//g' ./package/luci-app-daed/Makefile
+# daed 处理：删除 daed 对不存在的 vmlinux-btf 的条件依赖；并在 daed install 段追加软链，
+# 把 v2ray 的 geoip.dat/geosite.dat 装入 /usr/share/daed/。
+# (luci-app-daede 依赖 dae/daed，其 DEPENDS 不含 daed-geoip/daed-geosite，无需 sed 处理)
 python3 <<'PYEOF'
 import re
 p='./package/daed/Makefile'
